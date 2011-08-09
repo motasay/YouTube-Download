@@ -1,0 +1,16 @@
+{
+  "name": "YouTube Download",
+  "description": "Shows the download links for youtube videos.",
+  "version": "1.0",
+  "permissions": ["http://www.youtube.com/*"],
+  "content_scripts" : [
+    {
+      "matches" : [
+		"http://www.youtube.com/*"
+      ],
+      "js" : ["content-script.js"],
+      "run_at" : "document_end",
+      "all_frames" : false
+    }
+  ]
+}
