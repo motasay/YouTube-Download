@@ -1,10 +1,8 @@
-You have two options for installing the extension:
-1. Double click on the youtube-download.crx file;
-2. Or go to the extensions page in Chrome, and click on Load unpacked extension..., then choose the folder "youtube-download".
-
-After you install it, when you visit a video page on youtube's domain (e.g. http://www.youtube.com/watch?v=_0-SJNnnHFM) the extension will load directly. It'll display a green box at the top of the page that contains all the available download links along with their resolutions and formats.
+There are two ways to use this script:
+1. Using the bookmarklet: simply copy the code in the bookmarklet.js file and add it as a new bookmark. Then, whenever you're on a YT video page, click this bookmark to see the download links.
+2. Using the Google Chrome extension: go to the extensions page in Chrome, and click on Load unpacked extension..., then choose the folder "Chrome-Extension". When you visit a video page on youtube's domain (e.g. http://www.youtube.com/watch?v=_0-SJNnnHFM) the extension will load directly. It'll display a green box at the top of the page that contains all the available download links along with their resolutions and formats.
 
 Important:
-I made this extension because my internet connection is a bit slow, and I can't enjoy watching videos because they're buffering very slowly. So now I download the videos I want to watch, and watch them whenever I want, and then delete them.
+I made this extension because my internet connection is a bit slow, and I can't enjoy watching videos because they're buffering very slowly. So I download the videos that I want to watch, and watch them whenever I want, and then delete them.
 
 I guess what I am saying is: Please, do not use this extension for any thing that would violate any copyrights.
