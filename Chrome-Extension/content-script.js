@@ -1,35 +1,98 @@
-if (document.URL.indexOf('http://www.youtube.com/watch?v=') == -1)
-   return;
-
-var bodytxt = document.body.innerHTML;
-var urlMap = null, error = null;
-var urlMapStartIndex = bodytxt.indexOf('"url_encoded_fmt_stream_map"');
-if (urlMapStartIndex != -1)
+function getURLMap(bodyHTML)
 {
-  urlMap = bodytxt.substring(urlMapStartIndex);
-  var urlMapEndIndex = urlMap.indexOf('", ');
-  if (urlMapEndIndex != -1)
-  {
-	 urlMap = urlMap.substring(0, urlMapEndIndex);
-  }
+	var urlMap = null;
+	var urlMapStartIndex = bodyHTML.indexOf('"url_encoded_fmt_stream_map"');
+	if (urlMapStartIndex != -1)
+	{
+	  urlMap = bodyHTML.substring(urlMapStartIndex);
+	  var urlMapEndIndex = urlMap.indexOf('", ');
+	  if (urlMapEndIndex != -1)
+	  {
+		 urlMap = urlMap.substring(0, urlMapEndIndex);
+	  }
+	}
+	
+	if (urlMap == null)
+	  throw 'Error: Couldn\'t find url map.';
+	urlMap = urlMap.replace(/\\u0026/g, '&');
+	return urlMap;
 }
-if (urlMap == null)
-  error = 'Couldn\'t find url map.';
 
-if (error == null)
+function getCleanURL(url, requiredParameters)
+{
+   url = unescape(url);
+	var queryIndex = url.indexOf('?') + 1;
+	var cleanedURL = url.substring(0, queryIndex);
+	var paramsMap  = url.substring(queryIndex).split("&");
+	for (var i = 0; i < requiredParameters.length; i++) {
+		var param = requiredParameters[i];
+		var value = getValueForParameter(paramsMap, param);
+		if (value != null) {
+			cleanedURL = cleanedURL + param + "=" + value;
+			if (i + 1 != requiredParameters.length)
+				cleanedURL = cleanedURL + "&";
+		}
+		
+		if (param.toLowerCase() === 'sparams')
+		{
+			// loop through its the parameters specified here
+			var sparams = value.split(',');
+			for (var j = 0; j < sparams.length; j++)
+			{
+				param = sparams[j];
+				if (requiredParameters.indexOf(param) == -1)
+				{
+					value = getValueForParameter(paramsMap, param);
+					if (value != null)
+					{
+						cleanedURL = cleanedURL + param + "=" + value;
+						if (i + 1 != requiredParameters.length)
+							cleanedURL = cleanedURL + "&";
+					}
+// 					else
+// 					{
+// 						alert('Required param ' + param + ' not found.');
+// 					}
+				}
+			}
+		}
+	}
+	
+	return cleanedURL;
+}
+
+function getValueForParameter(paramsMap, param)
+{
+	var val = null;
+	for (var i = 0; i < paramsMap.length; i++) {
+		if (paramsMap[i].indexOf(param + '=') == 0)
+		{
+			val = paramsMap[i].substring(paramsMap[i].indexOf("=") + 1);
+			break;
+		}
+	}
+	
+	if (val == null && param.toLowerCase() === 'signature')
+	{
+		// signature may be there as "sig"
+		val = getValueForParameter(paramsMap, "sig");
+	}
+	
+	return val;
+}
+
+function getLinksAndFormats(urlMap)
 {
   urlMap = unescape(urlMap);
   urlMap = unescape(urlMap);
   var myRegexp = new RegExp('url=(http.+?videoplayback.+?id=.+?)(\\\\u0026|&)quality=', 'g');
+  var requiredParameters = ['upn', 'sparams', 'fexp', 'key', 'expire', 'itag', 'ipbits', 'sver', 'ratebypass', 'mt', 'ip', 'mv','source', 'ms', 'cp', 'id','newshard', 'signature', 'gcr'];
   var match = myRegexp.exec(urlMap);
   
   var linksAndFormats = new Array();
   var numOfLinks = 0;
   while (match != null) {
-	 // matched text: match[0]
-	 // match start: match.index
-	 // capturing group n: match[n]
-	 var link = unescape(match[1]);
+	 var link = getCleanURL(match[1], requiredParameters);
 	 var itagIndex = link.lastIndexOf('itag=');
 	 if (itagIndex != -1) {
 		 var fmt = parseInt(link.substring(itagIndex+5));
@@ -41,25 +104,14 @@ if (error == null)
 	 match = myRegexp.exec(urlMap);
   }
   if (numOfLinks==0)
-	 error = 'The regular expression failed to capture the download links.';
+	 throw 'Failed to find download links.';
+  linksAndFormats[0] = numOfLinks;
+  return linksAndFormats;
 }
 
-
-// Display them
-var download_div = document.createElement('span');
-download_div.id = 'youtube-download-span';
-var style = download_div.style;
-style.padding = '5px';
-style.borderRadius = '1em';
-style.lineHeight = '1.6';
-style.display = 'inline-block';
-style.margin = '5px auto';
-var container_div = document.createElement('div');
-container_div.style.textAlign = 'center';
-
-if (error == null)
+function getHTMLForLinks(linksAndFormats)
 {
-  style.backgroundColor = '#CCFFCC';
+  var numOfLinks = linksAndFormats[0];
   var standardLinksHTML = '';
   var hdLinksHTML = '';
   var thereIsHD = false;
@@ -76,6 +128,7 @@ if (error == null)
   *  43 = Medium    WebM
   *  5  = Small     FLV
   */
+  
   var addedSmall = false;
   if (linksAndFormats['5']) {
 	 standardLinksHTML += 'Small (<a href=\'' + linksAndFormats['5'] + '\'><span style="font-weight:normal">FLV</span></a>)%20%20%20%20%20';
@@ -185,16 +238,55 @@ if (error == null)
   }
   if (openedBracket && !closedBracket)
 	 hdLinksHTML += ')';
-	 
+
   if (thereIsHD)
-	 download_div.innerHTML = unescape('<h3>Download: (' + numOfLinks + ' links found)</h3>' + '<p style="text-align:left;">Standard: <span style="font-weight: bold">' + standardLinksHTML + '</span><br />' + 'High Def: <span style="font-weight: bold">' + hdLinksHTML + '</span></p>');
+	 return unescape('<h3>Download: (' + numOfLinks + ' links found)</h3>' + '<p style="text-align:left;">Standard: <span style="font-weight: bold">' + standardLinksHTML + '</span><br />' + 'High Def: <span style="font-weight: bold">' + hdLinksHTML + '</span></p>');
   else
-	 download_div.innerHTML = unescape('<h3>Download: (' + numOfLinks + ' links found)</h3>' + '<p style="text-align:left;">Standard: <span style="font-weight: bold">' + standardLinksHTML + '</span></p>');
+	 return unescape('<h3>Download: (' + numOfLinks + ' links found)</h3>' + '<p style="text-align:left;">Standard: <span style="font-weight: bold">' + standardLinksHTML + '</span></p>');
 }
-else
+
+function start()
 {
-  style.backgroundColor = '#FFF';
-  download_div.innerHTML = unescape('<h3 style="color:red;">' + error + '</h3>');
+	if (document.URL.indexOf('http://www.youtube.com/watch?v=') == -1) return;
+	
+	var error = null;
+	var urlMap = null;
+	var linksAndFormats = null;
+	try
+	{
+		urlMap = getURLMap(document.body.innerHTML);
+		linksAndFormats = getLinksAndFormats(urlMap);
+	}
+	catch(err)
+	{
+		error = err;
+	}
+	
+	var download_div = document.createElement('span');
+	download_div.id = 'youtube-download-span';
+	var style = download_div.style;
+	style.padding = '5px';
+	style.borderRadius = '1em';
+	style.lineHeight = '1.6';
+	style.display = 'inline-block';
+	style.margin = '5px auto';
+	var container_div = document.createElement('div');
+	container_div.style.textAlign = 'center';
+	
+	if (error == null)
+	{
+	  // Append the links to the div
+	  style.backgroundColor = '#CCFFCC';
+	  download_div.innerHTML = getHTMLForLinks(linksAndFormats)
+	}
+	else
+	{
+	  // Display the error
+	  style.backgroundColor = '#FFF';
+	  download_div.innerHTML = unescape('<h3 style="color:red;">' + error + '</h3>');
+	}
+	container_div.appendChild(download_div);
+	document.body.insertBefore(container_div,document.body.firstChild);
 }
-container_div.appendChild(download_div);
-document.body.insertBefore(container_div,document.body.firstChild);
+
+start();
