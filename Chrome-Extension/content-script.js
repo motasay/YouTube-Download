@@ -239,10 +239,11 @@ function getHTMLForLinks(linksAndFormats)
   if (openedBracket && !closedBracket)
 	 hdLinksHTML += ')';
 
+  var title = '<h2 style="color:#333;text-shadow:1px 1px #fff;">Download (' + numOfLinks + ' links found)</h2><p style="color:#555;text-align:center;font-weight:bold">';
   if (thereIsHD)
-	 return unescape('<h3>Download: (' + numOfLinks + ' links found)</h3>' + '<p style="text-align:left;">Standard: <span style="font-weight: bold">' + standardLinksHTML + '</span><br />' + 'High Def: <span style="font-weight: bold">' + hdLinksHTML + '</span></p>');
+	 return unescape(title + standardLinksHTML + '<br />' + hdLinksHTML + '</p>');
   else
-	 return unescape('<h3>Download: (' + numOfLinks + ' links found)</h3>' + '<p style="text-align:left;">Standard: <span style="font-weight: bold">' + standardLinksHTML + '</span></p>');
+	 return unescape(title + standardLinksHTML + '</p>');
 }
 
 function start()
@@ -270,21 +271,22 @@ function start()
 	style.lineHeight = '1.6';
 	style.display = 'inline-block';
 	style.margin = '5px auto';
-	var container_div = document.createElement('div');
-	container_div.style.textAlign = 'center';
+	style.boxShadow = '4px 4px 3px #999';
+	style.border = '1px #999 solid';
+	style.backgroundColor = '#ffe';
 	
 	if (error == null)
 	{
 	  // Append the links to the div
-	  style.backgroundColor = '#CCFFCC';
-	  download_div.innerHTML = getHTMLForLinks(linksAndFormats)
+	  download_div.innerHTML = getHTMLForLinks(linksAndFormats);
 	}
 	else
 	{
 	  // Display the error
-	  style.backgroundColor = '#FFF';
-	  download_div.innerHTML = unescape('<h3 style="color:red;">' + error + '</h3>');
+	  download_div.innerHTML = unescape('<h3 style="color:#cc0000;">' + error + '</h3>');
 	}
+	var container_div = document.createElement('div');
+	container_div.style.textAlign = 'center';
 	container_div.appendChild(download_div);
 	document.body.insertBefore(container_div,document.body.firstChild);
 }

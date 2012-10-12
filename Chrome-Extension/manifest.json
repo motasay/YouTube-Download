@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "YouTube Download",
   "description": "Shows the download links for youtube videos.",
-  "version": "2.0.1",
+  "version": "2.1",
   "permissions": ["http://www.youtube.com/*"],
   "content_scripts" : [
     {
