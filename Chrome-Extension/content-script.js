@@ -65,7 +65,7 @@ function getCleanURL(url) {
         // use regex
         var regexes = ['url=(http.+?videoplayback.+?id=.+?)(\u0026|&)quality=', '(http.+?videoplayback.+?id=.+?)(\u0026|&)'];
         for (var i = 0; i < regexes.length; i++) {
-            var match = regexes[i].exec(url);
+            var match = new RegExp(regexes[i]).exec(url);
             if (match != null) {
                 cleanURL = unescape(match[1]);
                 break;
